@@ -138,6 +138,7 @@
 
 #include<iostream>
 #include<vector>
+#include<algorithm>
 #include<queue>
 using namespace std;
 
@@ -156,58 +157,58 @@ unsigned short M = 0;
 unsigned short* Ci;
 unsigned short perfect;
 unsigned short nt[501][501] = { 0 };
-bool hasBfs[501] = { false };
 Sxy* sxy;
 queue<unsigned short> answer;
-int minCost = INT_MAX;
-int minRoad = INT_MAX;
+int minCost = -1;
+int minRoad = 0x7fffffff;
 
-void bfs(unsigned short now, queue<unsigned short> bufferTemp, queue<unsigned short> roadTemp, int dif, int roadLength, bool type)
+bool bfs(unsigned short now, queue<unsigned short> roadTemp, bool* hasBfs, int dif, int roadLength, bool type)
 {
 	//process current site
 	hasBfs[now] = true;
-	for (unsigned short i = 1; i < 501; i++)
-	{
-		if (nt[now][i] != 0 && !hasBfs[i])
-		{
-			bufferTemp.push(i);
-		}
-	}
-	if (type && Ci[now] > perfect)
-	{
-		int temp = Ci[now] - perfect;
-		dif += temp;
-	}
-	else if (!type && Ci[now] < perfect)
-	{
-		int temp = perfect - Ci[now];
-		dif += temp;
-	}
 	roadTemp.push(now);
-
-
-	//process next site
-	if (!roadTemp.empty() && now != Sp)
-	{
-		unsigned short nextSite = roadTemp.front();
-		roadTemp.pop();
-		roadLength += nt[now][nextSite];
-		bfs(nextSite, bufferTemp, roadTemp, dif, roadLength, type);
-	}
-
 
 	if (now == Sp)
 	{
 		if (roadLength < minRoad)
 		{
 			answer = roadTemp;
+			minRoad = roadLength;
 			minCost = dif;
 		}
-		else if (roadLength == minRoad && dif < minCost)
+		else if (roadLength == minRoad && dif > minCost)
 		{
 			answer = roadTemp;
+			minCost = dif;
+		}
+		return true;
+	}
+
+	if (now != 0)
+	{
+		if (type && Ci[now] > perfect)
+		{
+			int temp = Ci[now] - perfect;
+			dif += temp;
+		}
+		else if (!type && Ci[now] < perfect)
+		{
+			int temp = perfect - Ci[now];
+			dif += temp;
 		}
 	}
+
+	for (unsigned short i = 1; i < 501; i++)
+	{
+		if (nt[now][i] != 0 && !hasBfs[i])
+		{
+			bool hasBfs2[501];
+			copy(hasBfs, hasBfs+500, std::begin(hasBfs2));
+			bfs(i, roadTemp, hasBfs2, dif, roadLength + nt[now][i], type);
+		}
+	}
+
+	return true;
 }
 
 int main()
@@ -245,9 +246,9 @@ int main()
 	//bfs start
 	if (Ci[Sp] == 0)
 	{
-		queue<unsigned short> buffer;
+		bool hasBfs[501] = { false };
 		queue<unsigned short> road;
-		bfs(0, buffer, road, 0, 0, Ci[Sp] == 0 ? true : false);
+		bfs(0, road, hasBfs, 0, 0, Ci[Sp] == 0 ? true : false);
 	}
 	//bfs end
 
@@ -260,11 +261,12 @@ int main()
 		if (bike < 0)
 			bike = 0;
 		cout << bike << " ";
-		for (unsigned short i = 0; i < answer.size(); i++)
+		unsigned short temp = answer.size();
+		for (unsigned short i = 0; i < temp; i++)
 		{
 			cout << answer.front();
 			answer.pop();
-			if (i != answer.size() - 1)
+			if (i != temp - 1)
 				cout << "->";
 			else
 				cout << " ";
@@ -277,11 +279,12 @@ int main()
 		if (bike < 0)
 			bike = 0;
 		cout << 0 << " ";
-		for (unsigned short i = 0; i < answer.size(); i++)
+		unsigned short temp = answer.size();
+		for (unsigned short i = 0; i < temp; i++)
 		{
 			cout << answer.front();
 			answer.pop();
-			if (i != answer.size() - 1)
+			if (i != temp - 1)
 				cout << "->";
 			else
 				cout << " ";
@@ -290,6 +293,7 @@ int main()
 	}
 	//data process and output end
 
-	system("pause");
+	delete[]Ci;
+	delete[]sxy;
 
 }
