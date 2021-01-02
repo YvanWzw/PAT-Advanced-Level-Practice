@@ -159,14 +159,23 @@ unsigned short perfect;
 unsigned short nt[501][501] = { 0 };
 Sxy* sxy;
 queue<unsigned short> answer;
-int minCost = -1;
+int minCost = 0x80000000;
 int minRoad = 0x7fffffff;
+int returnBike = 0;
 
-bool bfs(unsigned short now, queue<unsigned short> roadTemp, bool* hasBfs, int dif, int roadLength, bool type)
+bool bfs(unsigned short now, queue<unsigned short> roadTemp, bool* hasBfs, int dif, int dif_ne, int roadLength)
 {
 	//process current site
 	hasBfs[now] = true;
 	roadTemp.push(now);
+
+	if (now != 0)
+	{
+		int temp = Ci[now] - perfect;
+		dif += temp;
+		if (dif < dif_ne)
+			dif_ne = dif;
+	}
 
 	if (now == Sp)
 	{
@@ -174,37 +183,31 @@ bool bfs(unsigned short now, queue<unsigned short> roadTemp, bool* hasBfs, int d
 		{
 			answer = roadTemp;
 			minRoad = roadLength;
-			minCost = dif;
+			minCost = dif_ne;
+			returnBike = dif-minCost;
 		}
-		else if (roadLength == minRoad && dif > minCost)
+		else if (roadLength == minRoad && dif_ne > minCost)
 		{
 			answer = roadTemp;
-			minCost = dif;
+			minCost = dif_ne;
+			returnBike = dif-minCost;
+		}
+		else if (roadLength == minRoad && dif_ne == minCost && (dif - dif_ne) < returnBike)
+		{
+			answer = roadTemp;
+			returnBike = dif - minCost;
 		}
 		return true;
 	}
 
-	if (now != 0)
-	{
-		if (type && Ci[now] > perfect)
-		{
-			int temp = Ci[now] - perfect;
-			dif += temp;
-		}
-		else if (!type && Ci[now] < perfect)
-		{
-			int temp = perfect - Ci[now];
-			dif += temp;
-		}
-	}
 
 	for (unsigned short i = 1; i < 501; i++)
 	{
 		if (nt[now][i] != 0 && !hasBfs[i])
 		{
 			bool hasBfs2[501];
-			copy(hasBfs, hasBfs+500, std::begin(hasBfs2));
-			bfs(i, roadTemp, hasBfs2, dif, roadLength + nt[now][i], type);
+			copy(hasBfs, hasBfs + 500, std::begin(hasBfs2));
+			bfs(i, roadTemp, hasBfs2, dif, dif_ne, roadLength + nt[now][i]);
 		}
 	}
 
@@ -244,53 +247,29 @@ int main()
 
 
 	//bfs start
-	if (Ci[Sp] == 0)
-	{
-		bool hasBfs[501] = { false };
-		queue<unsigned short> road;
-		bfs(0, road, hasBfs, 0, 0, Ci[Sp] == 0 ? true : false);
-	}
+
+	bool hasBfs[501] = { false };
+	queue<unsigned short> road;
+	bfs(0, road, hasBfs, 0, 0, 0);
+
 	//bfs end
 
 
 	//data process and output start (自行车计算)
-	int bike = 0;
-	if (Ci[Sp] == 0)
+
+	cout << abs(minCost) << " ";
+	unsigned short temp = answer.size();
+	for (unsigned short i = 0; i < temp; i++)
 	{
-		bike = perfect - minCost;
-		if (bike < 0)
-			bike = 0;
-		cout << bike << " ";
-		unsigned short temp = answer.size();
-		for (unsigned short i = 0; i < temp; i++)
-		{
-			cout << answer.front();
-			answer.pop();
-			if (i != temp - 1)
-				cout << "->";
-			else
-				cout << " ";
-		}
-		cout << 0;
+		cout << answer.front();
+		answer.pop();
+		if (i != temp - 1)
+			cout << "->";
+		else
+			cout << " ";
 	}
-	else if (Ci[Sp] == Cmax)
-	{
-		bike = minCost - perfect;
-		if (bike < 0)
-			bike = 0;
-		cout << 0 << " ";
-		unsigned short temp = answer.size();
-		for (unsigned short i = 0; i < temp; i++)
-		{
-			cout << answer.front();
-			answer.pop();
-			if (i != temp - 1)
-				cout << "->";
-			else
-				cout << " ";
-		}
-		cout << bike;
-	}
+	cout << returnBike;
+
 	//data process and output end
 
 	delete[]Ci;
