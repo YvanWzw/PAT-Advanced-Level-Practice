@@ -12,7 +12,7 @@
 //
 //Input Specification :
 //Each input file contains one test case.For each case, the first line contains a positive integer K(≤20) which is the number of repeat times.Then the next line contains the given order.All the numbers in a line are separated by a space.
-//
+// 
 //Output Specification :
 //For each test case, print the shuffling results in one line.All the cards are separated by a space, and there must be no extra space at the end of the line.
 //
